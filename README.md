@@ -238,7 +238,3 @@ const portfolioData = await apiClient.getPortfolioData();
 ## License
 
 This project is licensed under the MIT License.
-
-## Support
-
-For technical questions or backend integration guidance, please refer to the API documentation or create an issue in the repository.
