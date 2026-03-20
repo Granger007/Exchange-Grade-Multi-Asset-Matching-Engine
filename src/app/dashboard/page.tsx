@@ -11,6 +11,9 @@ import { StockTable } from '@/components/StockTable';
 import { EquityTable } from '@/components/EquityTable';
 import { RiskAlerts } from '@/components/RiskAlerts';
 import { NotificationPanel } from '@/components/NotificationPanel';
+import { RecentTradesWidget } from '@/components/trading/RecentTradesWidget';
+import { MiniOrderBook } from '@/components/trading/MiniOrderBook';
+import { MatchingStrategyIndicator } from '@/components/trading/MatchingStrategyIndicator';
 import { TrendingUp, TrendingDown, Bitcoin, DollarSign, BarChart3 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -22,9 +25,12 @@ export default function Dashboard() {
       <main className="ml-64 pt-20 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Trading Dashboard</h1>
-            <p className="text-white/70">Welcome back! Here's your market overview</p>
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Trading Dashboard</h1>
+              <p className="text-white/70">Welcome back! Here's your market overview</p>
+            </div>
+            <MatchingStrategyIndicator strategy="FIFO" />
           </div>
 
           {/* Market Overview Cards */}
@@ -109,7 +115,17 @@ export default function Dashboard() {
             </GlassCard>
           </div>
 
-          {/* Crypto, Stock, and Equity Tables */}
+          {/* New Trading Widgets (Recent Trades & Mini Order Book) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-96">
+              <RecentTradesWidget />
+            </div>
+            <div className="h-96">
+              <MiniOrderBook />
+            </div>
+          </div>
+
+          {/* Crypto, Stock, and Equity Tables /*}
           <div className="space-y-6">
             <CryptoTable />
             <StockTable />

@@ -1,126 +1,118 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { GlassCard } from '../GlassCard';
 
-interface OrderBookEntry {
-  price: number;
-  size: number;
-  total: number;
-}
+// Mock data generator for order book
+const generateOrderBookData = () => {
+  const bids = Array.from({ length: 15 }, (_, i) => ({
+    price: 64000 - i * 10 - Math.random() * 5,
+    size: Math.random() * 2 + 0.1,
+    total: 0,
+  }));
+  
+  const asks = Array.from({ length: 15 }, (_, i) => ({
+    price: 64005 + i * 10 + Math.random() * 5,
+    size: Math.random() * 2 + 0.1,
+    total: 0,
+  }));
 
-interface OrderBookData {
-  bids: OrderBookEntry[];
-  asks: OrderBookEntry[];
-}
-
-export const OrderBook: React.FC<{ symbol: string }> = ({ symbol }) => {
-  const [orderBookData, setOrderBookData] = useState<OrderBookData>({
-    bids: [],
-    asks: []
+  // Calculate totals for depth bars
+  let bidTotal = 0;
+  bids.forEach(b => {
+    bidTotal += b.size;
+    b.total = bidTotal;
   });
-  const [loading, setLoading] = useState(true);
+
+  let askTotal = 0;
+  asks.forEach(a => {
+    askTotal += a.size;
+    a.total = askTotal;
+  });
+
+  return { bids, asks: asks.reverse(), maxTotal: Math.max(bidTotal, askTotal) };
+};
+
+export const OrderBook: React.FC = () => {
+  const [data, setData] = useState<{
+    bids: {price: number, size: number, total: number}[];
+    asks: {price: number, size: number, total: number}[];
+    maxTotal: number;
+  }>({
+    bids: [],
+    asks: [],
+    maxTotal: 0
+  });
 
   useEffect(() => {
-    const fetchOrderBook = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/orderbook/${symbol}`);
-        const data = await response.json();
-        
-        const mockData: OrderBookData = {
-          bids: [
-            { price: 43250.50, size: 0.125, total: 5406.31 },
-            { price: 43250.00, size: 0.250, total: 10812.50 },
-            { price: 43249.75, size: 0.100, total: 4324.98 },
-            { price: 43249.50, size: 0.500, total: 21624.75 },
-            { price: 43249.25, size: 0.075, total: 3243.69 },
-            { price: 43249.00, size: 0.200, total: 8649.80 },
-            { price: 43248.75, size: 0.150, total: 6487.31 },
-            { price: 43248.50, size: 0.300, total: 12974.55 },
-          ],
-          asks: [
-            { price: 43251.00, size: 0.100, total: 4325.10 },
-            { price: 43251.25, size: 0.075, total: 3243.84 },
-            { price: 43251.50, size: 0.200, total: 8650.30 },
-            { price: 43251.75, size: 0.150, total: 6487.76 },
-            { price: 43252.00, size: 0.250, total: 10813.00 },
-            { price: 43252.25, size: 0.125, total: 5406.53 },
-            { price: 43252.50, size: 0.100, total: 4325.25 },
-            { price: 43252.75, size: 0.075, total: 3243.96 },
-          ]
-        };
-        
-        setOrderBookData(mockData);
-      } catch (error) {
-        console.error('Error fetching order book:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrderBook();
-    const interval = setInterval(fetchOrderBook, 1000);
+    setData(generateOrderBookData());
+    const interval = setInterval(() => {
+      setData(generateOrderBookData());
+    }, 2000); // Simulate WebSocket updates every 2s
     return () => clearInterval(interval);
-  }, [symbol]);
+  }, []);
 
-  const formatPrice = (price: number) => {
-    return price.toFixed(2);
-  };
-
-  const formatSize = (size: number) => {
-    return size.toFixed(3);
-  };
-
-  const formatTotal = (total: number) => {
-    return total.toFixed(2);
-  };
-
-  if (loading) {
-    return (
-      <GlassCard className="p-4">
-        <h3 className="text-white font-semibold mb-4">Order Book</h3>
-        <div className="text-white/50 text-center py-8">Loading...</div>
-      </GlassCard>
-    );
-  }
+  const formatPrice = (p: number) => p.toFixed(2);
+  const formatSize = (s: number) => s.toFixed(4);
 
   return (
-    <GlassCard className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold">Order Book</h3>
-        <span className="text-white/70 text-sm">{symbol}</span>
+    <div className="glass-card flex flex-col h-full overflow-hidden">
+      <div className="p-4 border-b border-white/10 flex justify-between items-center">
+        <h3 className="font-semibold text-white">Order Book</h3>
+        <div className="text-xs text-white/50 flex space-x-2">
+          <span className="cursor-pointer hover:text-white transition-colors">0.1</span>
+          <span className="cursor-pointer hover:text-white transition-colors">0.01</span>
+          <span className="cursor-pointer hover:text-white transition-colors">0.001</span>
+        </div>
       </div>
-      
-      <div className="grid grid-cols-3 text-xs text-white/50 mb-2">
-        <div>Price</div>
-        <div className="text-center">Size</div>
-        <div className="text-right">Total</div>
+
+      <div className="flex text-xs text-white/50 px-4 py-2">
+        <div className="flex-1">Price(USDT)</div>
+        <div className="flex-1 text-right">Size(BTC)</div>
+        <div className="flex-1 text-right">Total</div>
       </div>
-      
-      <div className="space-y-1 max-h-96 overflow-y-auto">
-        <div className="space-y-1">
-          {orderBookData.asks.slice().reverse().map((ask, index) => (
-            <div key={`ask-${index}`} className="grid grid-cols-3 text-xs">
-              <div className="text-pink-400">{formatPrice(ask.price)}</div>
-              <div className="text-center text-white/70">{formatSize(ask.size)}</div>
-              <div className="text-right text-white/70">{formatTotal(ask.total)}</div>
+
+      <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar">
+        {/* Asks (Sell Orders - Red) */}
+        <div className="flex flex-col justify-end px-2">
+          {data.asks.map((ask, i) => (
+            <div key={`ask-${i}`} className="flex text-sm py-1 relative hover:bg-white/5 cursor-pointer group">
+              {/* Depth bar */}
+              <div 
+                className="absolute right-0 top-0 bottom-0 bg-primary-pink/10 transition-all duration-300"
+                style={{ width: `${(ask.total / data.maxTotal) * 100}%` }}
+              />
+              <div className="flex-1 text-primary-pink relative z-10 pl-2">{formatPrice(ask.price)}</div>
+              <div className="flex-1 text-right text-white relative z-10">{formatSize(ask.size)}</div>
+              <div className="flex-1 text-right text-white/70 relative z-10 pr-2">{formatSize(ask.total)}</div>
             </div>
           ))}
         </div>
-        
-        <div className="border-t border-white/10 my-2"></div>
-        
-        <div className="space-y-1">
-          {orderBookData.bids.map((bid, index) => (
-            <div key={`bid-${index}`} className="grid grid-cols-3 text-xs">
-              <div className="text-green-400">{formatPrice(bid.price)}</div>
-              <div className="text-center text-white/70">{formatSize(bid.size)}</div>
-              <div className="text-right text-white/70">{formatTotal(bid.total)}</div>
+
+        {/* Spread / Current Price */}
+        <div className="flex items-center justify-between py-2 px-4 border-y border-white/10 my-1 bg-white/5">
+          <div className="flex items-center space-x-2">
+            <span className="text-xl font-bold text-primary-green">64,002.50</span>
+            <span className="text-xs text-white/50">$64,002.50</span>
+          </div>
+          <span className="text-xs text-white/50">Spread: 2.50</span>
+        </div>
+
+        {/* Bids (Buy Orders - Green) */}
+        <div className="flex flex-col px-2">
+          {data.bids.map((bid, i) => (
+            <div key={`bid-${i}`} className="flex text-sm py-1 relative hover:bg-white/5 cursor-pointer group">
+              {/* Depth bar */}
+              <div 
+                className="absolute right-0 top-0 bottom-0 bg-primary-green/10 transition-all duration-300"
+                style={{ width: `${(bid.total / data.maxTotal) * 100}%` }}
+              />
+              <div className="flex-1 text-primary-green relative z-10 pl-2">{formatPrice(bid.price)}</div>
+              <div className="flex-1 text-right text-white relative z-10">{formatSize(bid.size)}</div>
+              <div className="flex-1 text-right text-white/70 relative z-10 pr-2">{formatSize(bid.total)}</div>
             </div>
           ))}
         </div>
       </div>
-    </GlassCard>
+    </div>
   );
 };

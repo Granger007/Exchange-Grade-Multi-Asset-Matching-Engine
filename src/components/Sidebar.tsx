@@ -17,6 +17,7 @@ import {
   Activity,
   TrendingDown
 } from 'lucide-react';
+import { MatchingStrategyIndicator } from './trading/MatchingStrategyIndicator';
 
 interface SidebarItem {
   icon: React.ReactNode;
@@ -26,16 +27,14 @@ interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
   { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/dashboard' },
-  { icon: <ShoppingCart size={20} />, label: 'Markets', href: '/markets' },
-  { icon: <BookOpen size={20} />, label: 'Orders', href: '/orders' },
-  { icon: <Activity size={20} />, label: 'Trades', href: '/trades' },
-  { icon: <TrendingDown size={20} />, label: 'Order Book', href: '/orderbook' },
-  { icon: <BarChart3 size={20} />, label: 'Market Depth', href: '/depth' },
-  { icon: <DollarSign size={20} />, label: 'Stocks', href: '/stocks' },
+  { icon: <TrendingUp size={20} />, label: 'Trading', href: '/trading' },
+  { icon: <DollarSign size={20} />, label: 'Crypto', href: '/crypto' },
+  { icon: <BarChart3 size={20} />, label: 'Stocks', href: '/stocks' },
   { icon: <PieChart size={20} />, label: 'Equity', href: '/equity' },
-  { icon: <BarChart3 size={20} />, label: 'Portfolio', href: '/portfolio' },
-  { icon: <TrendingUp size={20} />, label: 'Market Analytics', href: '/market' },
+  { icon: <BookOpen size={20} />, label: 'Portfolio', href: '/portfolio' },
+  { icon: <Activity size={20} />, label: 'Market Analytics', href: '/analytics' },
   { icon: <AlertTriangle size={20} />, label: 'Risk Alerts', href: '/risk' },
+  { icon: <Bell size={20} />, label: 'Notifications', href: '/notifications' },
   { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
 ];
 
@@ -59,8 +58,8 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
 
-        <nav className="flex-1 p-4">
-          <ul className="space-y-2">
+        <nav className="flex-1 p-4 flex flex-col no-scrollbar overflow-y-auto">
+          <ul className="space-y-2 flex-1">
             {sidebarItems.map((item, index) => (
               <li key={index}>
                 <a
@@ -71,7 +70,7 @@ export const Sidebar: React.FC = () => {
                     {item.icon}
                   </span>
                   {!isCollapsed && (
-                    <span className="text-white/70 group-hover:text-white transition-colors">
+                    <span className="text-white/70 group-hover:text-white transition-colors whitespace-nowrap">
                       {item.label}
                     </span>
                   )}
@@ -79,6 +78,14 @@ export const Sidebar: React.FC = () => {
               </li>
             ))}
           </ul>
+          
+          <div className="mt-auto"></div>
+          
+          {!isCollapsed && (
+            <div className="mb-2">
+              <MatchingStrategyIndicator />
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-white/10">
