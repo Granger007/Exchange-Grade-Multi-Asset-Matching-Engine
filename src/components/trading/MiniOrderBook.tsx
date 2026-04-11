@@ -1,33 +1,41 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { GlassCard } from '@/components/GlassCard';
+import { Trade } from '@/app/dashboard/page';
 
-export const MiniOrderBook: React.FC = () => {
-  const [bids, setBids] = useState<{price: number, size: number}[]>([]);
-  const [asks, setAsks] = useState<{price: number, size: number}[]>([]);
+interface MiniOrderBookProps {
+  trades: Trade[];
+  currentPrice: number;
+}
 
-  useEffect(() => {
-    const generate = () => {
-      setBids(Array.from({ length: 6 }, (_, i) => ({
-        price: 64000 - i * 5 - Math.random() * 5,
-        size: Math.random() * 2 + 0.1,
-      })));
-      setAsks(Array.from({ length: 6 }, (_, i) => ({
-        price: 64005 + i * 5 + Math.random() * 5,
-        size: Math.random() * 2 + 0.1,
-      })).reverse());
-    };
-    
-    generate();
-    const interval = setInterval(generate, 2000);
-    return () => clearInterval(interval);
-  }, []);
+export const MiniOrderBook: React.FC<MiniOrderBookProps> = ({ trades = [], currentPrice = 64000 }) => {
+  // Simulate bids/asks from recent trades
+  const { bids, asks } = useMemo(() => {
+    // Generate simulated orderbook around the current price
+    // To make it dynamic, we adjust based on recent trades
+    const recentSells = trades.filter(t => t.side === 'SELL');
+    const recentBuys = trades.filter(t => t.side === 'BUY');
+
+    // Asks are above current price
+    const genAsks = Array.from({ length: 6 }, (_, i) => ({
+      price: currentPrice + 5 + i * 5 + (recentSells.length ? Math.random() * 2 : 0),
+      size: Math.random() * 2 + 0.1,
+    })).reverse();
+
+    // Bids are below current price
+    const genBids = Array.from({ length: 6 }, (_, i) => ({
+      price: currentPrice - 5 - i * 5 - (recentBuys.length ? Math.random() * 2 : 0),
+      size: Math.random() * 2 + 0.1,
+    }));
+
+    return { bids: genBids, asks: genAsks };
+  }, [trades, currentPrice]);
 
   return (
     <GlassCard className="flex flex-col h-full overflow-hidden">
       <div className="p-4 border-b border-white/10 flex justify-between items-center">
-        <h3 className="font-semibold text-white">BTC/USDT Order Book Snapshot</h3>
+        <h3 className="font-semibold text-white">BTC Order Book Snapshot</h3>
       </div>
       
       <div className="flex text-xs text-white/50 px-4 py-2 border-b border-white/5">
@@ -48,7 +56,7 @@ export const MiniOrderBook: React.FC = () => {
 
         {/* Spread */}
         <div className="text-center py-2 bg-white/5 rounded text-lg font-bold text-primary-green my-1">
-          $64,002.50
+          ${currentPrice.toFixed(2)}
         </div>
 
         {/* Bids */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/GlassCard';
@@ -16,7 +16,60 @@ import { MiniOrderBook } from '@/components/trading/MiniOrderBook';
 import { MatchingStrategyIndicator } from '@/components/trading/MatchingStrategyIndicator';
 import { TrendingUp, TrendingDown, Bitcoin, DollarSign, BarChart3 } from 'lucide-react';
 
+export type Trade = {
+  id: string;
+  symbol: string;
+  price: number;
+  quantity: number;
+  side: 'BUY' | 'SELL';
+  timestamp: string;
+};
+
+export type Prices = {
+  BTC: number;
+  ETH: number;
+};
+
 export default function Dashboard() {
+  const [prices, setPrices] = useState<Prices>({ BTC: 64000, ETH: 3500 });
+  const [prevPrices, setPrevPrices] = useState<Prices>({ BTC: 64000, ETH: 3500 });
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [strategy, setStrategy] = useState<string>('FIFO');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const pRes = await fetch('/api/price');
+        const pData = await pRes.json();
+        setPrevPrices((old) => pData.BTC ? old : old); // Small trick to capture old prices safely
+        setPrices((old) => {
+          setPrevPrices(old);
+          return pData;
+        });
+
+        const tRes = await fetch('/api/trade');
+        const tData = await tRes.json();
+        setTrades(tData);
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    };
+    
+    fetchData();
+    const interval = setInterval(fetchData, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatPrice = (val: number) => `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatChange = (val: number) => `${val >= 0 ? '+' : ''}${val.toFixed(2)}`;
+  const formatPct = (val: number) => `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`;
+
+  const btcChange = prices.BTC - prevPrices.BTC;
+  const btcPct = prevPrices.BTC ? (btcChange / prevPrices.BTC) * 100 : 0;
+  
+  const ethChange = prices.ETH - prevPrices.ETH;
+  const ethPct = prevPrices.ETH ? (ethChange / prevPrices.ETH) * 100 : 0;
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -30,23 +83,23 @@ export default function Dashboard() {
               <h1 className="text-3xl font-bold text-white mb-2">Trading Dashboard</h1>
               <p className="text-white/70">Welcome back! Here's your market overview</p>
             </div>
-            <MatchingStrategyIndicator strategy="FIFO" />
+            <MatchingStrategyIndicator strategy={strategy} />
           </div>
 
           {/* Market Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <MarketCard
               title="Bitcoin"
-              value="$43,567"
-              change={1234}
-              changePercent="+2.9%"
+              value={formatPrice(prices.BTC)}
+              change={btcChange}
+              changePercent={formatPct(btcPct)}
               icon={<Bitcoin size={24} className="text-orange-500" />}
             />
             <MarketCard
               title="Ethereum"
-              value="$2,234"
-              change={-89}
-              changePercent="-3.8%"
+              value={formatPrice(prices.ETH)}
+              change={ethChange}
+              changePercent={formatPct(ethPct)}
               icon={<TrendingUp size={24} className="text-blue-500" />}
             />
             <MarketCard
@@ -118,14 +171,14 @@ export default function Dashboard() {
           {/* New Trading Widgets (Recent Trades & Mini Order Book) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="h-96">
-              <RecentTradesWidget />
+              <RecentTradesWidget trades={trades} />
             </div>
             <div className="h-96">
-              <MiniOrderBook />
+              <MiniOrderBook trades={trades} currentPrice={prices.BTC} />
             </div>
           </div>
 
-          {/* Crypto, Stock, and Equity Tables /*}
+          {/* Crypto, Stock, and Equity Tables */}
           <div className="space-y-6">
             <CryptoTable />
             <StockTable />
@@ -138,7 +191,7 @@ export default function Dashboard() {
       </main>
 
       {/* Notification Panel */}
-      <NotificationPanel />
+      <NotificationPanel trades={trades} />
     </div>
   );
 }

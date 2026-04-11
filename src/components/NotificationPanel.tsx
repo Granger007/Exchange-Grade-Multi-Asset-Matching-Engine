@@ -1,96 +1,94 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from './GlassCard';
 import { Bell, X, TrendingUp, AlertTriangle, DollarSign, Info } from 'lucide-react';
 
 interface Notification {
-  id: number;
-  type: 'price' | 'risk' | 'trade' | 'info';
+  id: string;
+  type: string;
   title: string;
   message: string;
-  timestamp: string;
-  read: boolean;
+  isRead: boolean;
+  createdAt: string;
 }
-
-const notifications: Notification[] = [
-  {
-    id: 1,
-    type: 'price',
-    title: 'BTC Price Alert',
-    message: 'Bitcoin reached $44,000 - 2.3% increase in the last hour',
-    timestamp: '5 min ago',
-    read: false
-  },
-  {
-    id: 2,
-    type: 'trade',
-    title: 'Trade Executed',
-    message: 'Buy order for 10 ETH filled at $2,234',
-    timestamp: '1 hour ago',
-    read: false
-  },
-  {
-    id: 3,
-    type: 'risk',
-    title: 'Risk Alert',
-    message: 'Portfolio volatility increased by 15%',
-    timestamp: '2 hours ago',
-    read: true
-  },
-  {
-    id: 4,
-    type: 'info',
-    title: 'Market Update',
-    message: 'S&P 500 reached new all-time high',
-    timestamp: '3 hours ago',
-    read: true
-  },
-  {
-    id: 5,
-    type: 'price',
-    title: 'TSLA Price Drop',
-    message: 'Tesla down 5.2% in pre-market trading',
-    timestamp: '4 hours ago',
-    read: true
-  },
-];
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
-    case 'price':
+    case 'PRICE':
       return <TrendingUp size={16} className="text-primary-green" />;
-    case 'risk':
+    case 'RISK':
       return <AlertTriangle size={16} className="text-primary-pink" />;
-    case 'trade':
-      return <DollarSign size={16} className="primary-blue" />;
-    case 'info':
-      return <Info size={16} className="text-primary-purple" />;
+    case 'ORDER_OPEN':
+    case 'ORDER_FILLED':
+    case 'TRADE':
+      return <DollarSign size={16} className="text-primary-blue" />;
     default:
-      return <Bell size={16} className="text-white/50" />;
+      return <Info size={16} className="text-primary-purple" />;
   }
 };
 
 export const NotificationPanel: React.FC = () => {
-  const [notificationList, setNotificationList] = useState(notifications);
+  const [notificationList, setNotificationList] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const unreadCount = notificationList.filter(n => !n.read).length;
+  // Fetch notifications from MySQL DB
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('/api/notifications?userId=test-user-123');
+        if (res.ok) {
+          const data = await res.json();
+          setNotificationList(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch notifications');
+      }
+    };
 
-  const markAsRead = (id: number) => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, []);
+
+  const unreadCount = notificationList.filter(n => !n.isRead).length;
+
+  const markAsRead = async (id: string, isCurrentlyRead: boolean) => {
+    if (isCurrentlyRead) return;
+    
+    // Optistic UI update
     setNotificationList(prev => 
       prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
+        notif.id === id ? { ...notif, isRead: true } : notif
       )
     );
+
+    // Persist to MySQL
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: id })
+      });
+    } catch (err) {
+      console.error('Failed to update read status');
+    }
   };
 
-  const dismissNotification = (id: number) => {
-    setNotificationList(prev => prev.filter(notif => notif.id !== id));
-  };
+  const markAllAsRead = async () => {
+    const unreadIds = notificationList.filter(n => !n.isRead).map(n => n.id);
+    
+    // Optimistic UI update
+    setNotificationList(prev => prev.map(notif => ({ ...notif, isRead: true })));
 
-  const markAllAsRead = () => {
-    setNotificationList(prev => prev.map(notif => ({ ...notif, read: true })));
+    // Persist to MySQL (simple loop for batch, properly would be a batch endpoint)
+    unreadIds.forEach(id => {
+      fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: id })
+      }).catch(console.error);
+    });
   };
 
   return (
@@ -145,45 +143,41 @@ export const NotificationPanel: React.FC = () => {
               </div>
             ) : (
               <div className="divide-y divide-white/5">
-                {notificationList.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-4 hover:bg-white/5 transition-colors cursor-pointer ${
-                      !notification.read ? 'bg-white/5' : ''
-                    }`}
-                    onClick={() => markAsRead(notification.id)}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="mt-1">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className={`text-sm font-medium ${
-                            !notification.read ? 'text-white' : 'text-white/70'
-                          }`}>
-                            {notification.title}
-                          </h4>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              dismissNotification(notification.id);
-                            }}
-                            className="text-white/30 hover:text-white/50"
-                          >
-                            <X size={14} />
-                          </button>
+                {notificationList.map((notification) => {
+                  const date = new Date(notification.createdAt);
+                  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                  return (
+                    <div
+                      key={notification.id}
+                      className={`p-4 hover:bg-white/5 transition-colors cursor-pointer ${
+                        !notification.isRead ? 'bg-white/5' : ''
+                      }`}
+                      onClick={() => markAsRead(notification.id, notification.isRead)}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="mt-1">
+                          {getNotificationIcon(notification.type)}
                         </div>
-                        <p className="text-white/50 text-sm mb-2">
-                          {notification.message}
-                        </p>
-                        <p className="text-white/30 text-xs">
-                          {notification.timestamp}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className={`text-sm font-medium ${
+                              !notification.isRead ? 'text-white' : 'text-white/70'
+                            }`}>
+                              {notification.title}
+                            </h4>
+                          </div>
+                          <p className="text-white/50 text-sm mb-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-white/30 text-xs">
+                            {timeString}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

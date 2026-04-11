@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  username      String         @unique
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  wallets       Wallet[]
+  orders        TradeOrder[]
+  notifications Notification[]
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String
+  asset     String   // e.g., "USD", "BTC", "ETH"
+  balance   Float    @default(0.0)
+  locked    Float    @default(0.0) // Funds locked in open orders
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, asset])
+}
+
+model TradeOrder {
+  id        String   @id @default(uuid())
+  userId    String
+  pair      String   // e.g., "BTC_USD"
+  type      String   // "LIMIT" or "MARKET"
+  side      String   // "BUY" or "SELL"
+  price     Float?   // null for MARKET orders
+  quantity  Float
+  filledQty Float    @default(0.0)
+  status    String   // "NEW", "PARTIAL", "FILLED", "CANCELLED", "REJECTED"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // "ORDER_FILLED", "DEPOSIT", "ALERT"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
