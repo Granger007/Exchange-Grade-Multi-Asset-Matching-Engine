@@ -1,4 +1,4 @@
-// Temporary mock database for development
+// Mock database for development - bypasses mysql2 dependency
 interface MockRow {
   [key: string]: any;
 }

@@ -163,7 +163,6 @@ export const OrderForm: React.FC = () => {
               onChange={(e) => setPrice(e.target.value)}
               disabled={orderType === 'MARKET'}
               placeholder={orderType === 'MARKET' ? 'Market Price' : '0.00'}
-              step="0.01"
               className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary-blue transition-colors disabled:opacity-50"
             />
             {orderType === 'LIMIT' && (
@@ -184,7 +183,6 @@ export const OrderForm: React.FC = () => {
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="0.00"
-              step="0.0001"
               className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-primary-blue transition-colors"
             />
           </div>
