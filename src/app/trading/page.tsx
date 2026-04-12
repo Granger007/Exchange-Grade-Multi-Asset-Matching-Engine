@@ -18,44 +18,48 @@ export default function TradingPage() {
         <Navbar />
         
         {/* Main Content padding to account for fixed navbar */}
-        <div className="flex-1 p-6 pt-24 no-scrollbar h-screen overflow-y-auto">
+        <div className="flex-1 p-6 pt-24 pb-12 overflow-y-auto w-full">
           
-          {/* Top Ticker Row */}
-          <div className="mb-4">
-            <PriceTicker />
-          </div>
-
-          {/* Grid Layout taking majority of height */}
-          <div className="grid grid-cols-12 gap-4 h-[55vh] mb-4">
-            {/* Left Box: Order Book (3 cols) */}
-            <div className="col-span-3 h-full">
-              <OrderBook />
+          <div className="max-w-[1700px] mx-auto space-y-4">
+            {/* Top Ticker Row */}
+            <div>
+              <PriceTicker />
             </div>
 
-            {/* Center Box: Chart & Info (6 cols) */}
-            <div className="col-span-6 h-full flex flex-col space-y-4">
-              <div className="flex-1">
-                <PriceChart />
+            {/* Grid Layout Top Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              
+              {/* Left Box: Order Book (3 cols) */}
+              <div className="lg:col-span-3 h-[600px] overflow-hidden">
+                <OrderBook />
               </div>
-              <div className="h-1/3 flex space-x-4">
-                <div className="flex-1 h-full"><MatchingActivity /></div>
-                <div className="flex-1 h-full"><MatchingStrategy /></div>
+
+              {/* Center Box: Chart & Info (6 cols) */}
+              <div className="lg:col-span-6 flex flex-col space-y-4 h-[600px] overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <PriceChart />
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 h-[120px] shrink-0">
+                  <div className="h-full overflow-hidden"><MatchingActivity /></div>
+                  <div className="h-full overflow-hidden"><MatchingStrategy /></div>
+                </div>
               </div>
+
+              {/* Right Box: Order Entry (3 cols) */}
+              <div className="lg:col-span-3 h-[600px] overflow-hidden">
+                <OrderForm />
+              </div>
+
             </div>
 
-            {/* Right Box: Order Entry (3 cols) */}
-            <div className="col-span-3 h-full">
-              <OrderForm />
-            </div>
-          </div>
-
-          {/* Bottom Row */}
-          <div className="grid grid-cols-12 gap-4 h-[35vh]">
-            <div className="col-span-3 h-full">
-              <TradeFeed />
-            </div>
-            <div className="col-span-9 h-full">
-              <OrderTable />
+            {/* Bottom Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-3 h-[400px] overflow-hidden">
+                <TradeFeed />
+              </div>
+              <div className="lg:col-span-9 h-[400px] overflow-hidden">
+                <OrderTable />
+              </div>
             </div>
           </div>
 

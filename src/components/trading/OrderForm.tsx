@@ -24,8 +24,11 @@ export const OrderForm: React.FC = () => {
     return `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!quantity || (orderType === 'LIMIT' && !price)) return;
+    
     setIsSubmitting(true);
 
     // Simulate order placement
@@ -38,25 +41,51 @@ export const OrderForm: React.FC = () => {
       status: 'NEW'
     };
 
-    // Simulate processing delay
-    setTimeout(() => {
-      setLastOrder(newOrder);
-      setIsSubmitting(false);
-      
-      // Show success message
-      const message = orderType === 'LIMIT' 
-        ? `${side} order placed: ${quantity} BTC @ $${price} (FIFO Queue)`
-        : `${side} order placed: ${quantity} BTC @ Market`;
-      
-      console.log('FIFO Order Placed:', newOrder);
-      console.log(message);
-      
-      // Reset form after successful submission
-      if (orderType === 'LIMIT') {
-        setPrice('64000.00');
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'test-user-123', // Hardcoded local user for demo
+          pair: 'BTC/USDT',
+          type: orderType,
+          side: side,
+          price: orderType === 'LIMIT' ? price : null,
+          quantity: quantity
+        }),
+      });
+
+      // Simulate processing delay
+      setTimeout(() => {
+        setLastOrder(newOrder);
+        setIsSubmitting(false);
+        
+        // Show success message
+        const message = orderType === 'LIMIT' 
+          ? `${side} order placed: ${quantity} BTC @ $${price} (FIFO Queue)`
+          : `${side} order placed: ${quantity} BTC @ Market`;
+        
+        console.log('FIFO Order Placed:', newOrder);
+        console.log(message);
+        
+        // Reset form after successful submission
+        setQuantity('');
+        if (orderType === 'LIMIT') {
+          setPrice('64000.00');
+        }
+      }, 1000);
+
+      if (!response.ok) {
+        throw new Error('Failed to place order');
       }
-      setQuantity('0.5');
-    }, 1000);
+    } catch (error) {
+      console.error('Order error:', error);
+      alert('Error placing order to MySQL Database');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = () => {
@@ -122,13 +151,14 @@ export const OrderForm: React.FC = () => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-4">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-4 overflow-y-auto pr-2 custom-scrollbar">
         {/* Price Input */}
         <div>
           <label className="block text-xs text-white/50 mb-1">Price (USDT)</label>
           <div className="relative">
             <input
               type="number"
+              step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               disabled={orderType === 'MARKET'}
@@ -150,6 +180,7 @@ export const OrderForm: React.FC = () => {
           <div className="relative">
             <input
               type="number"
+              step="0.0001"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="0.00"
@@ -172,9 +203,9 @@ export const OrderForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1"></div>
+        <div className="flex-1 min-h-0"></div>
 
-        {/* Total Cost */}
+        {/* Total Cost Placeholder */}
         <div className="flex justify-between text-sm py-4 border-t border-white/10 mt-auto">
           <span className="text-white/50">Total</span>
           <span className="text-white font-medium">
