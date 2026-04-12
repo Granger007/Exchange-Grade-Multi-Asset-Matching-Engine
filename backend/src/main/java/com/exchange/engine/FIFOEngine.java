@@ -102,7 +102,6 @@ public class FIFOEngine implements MatchingEngine {
             UUID.randomUUID().toString(),
             buyOrder.getId(),
             sellOrder.getId(),
-            buyOrder.getPair(),
             price,
             quantity,
             System.currentTimeMillis()

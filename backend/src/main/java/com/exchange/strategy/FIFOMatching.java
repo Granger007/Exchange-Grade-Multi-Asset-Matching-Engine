@@ -8,6 +8,7 @@ import com.exchange.domain.OrderSide;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.TreeMap;
 
 public class FIFOMatching implements MatchingStrategy {
@@ -89,7 +90,8 @@ public class FIFOMatching implements MatchingStrategy {
     private TradeExecution createExecution(Order incomingOrder, Order restingOrder, double price, long quantity, long timestamp) {
         String buyOrderId = incomingOrder.getSide() == OrderSide.BUY ? incomingOrder.getOrderId() : restingOrder.getOrderId();
         String sellOrderId = incomingOrder.getSide() == OrderSide.SELL ? incomingOrder.getOrderId() : restingOrder.getOrderId();
+        String tradeId = UUID.randomUUID().toString();
         
-        return new TradeExecution(buyOrderId, sellOrderId, price, quantity, timestamp);
+        return new TradeExecution(tradeId, buyOrderId, sellOrderId, price, quantity, timestamp);
     }
 }

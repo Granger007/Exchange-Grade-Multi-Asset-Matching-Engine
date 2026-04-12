@@ -1,18 +1,24 @@
 package com.exchange.domain;
 
 public class TradeExecution {
+    private final String id;
     private final String buyOrderId;
     private final String sellOrderId;
     private final double price;
     private final long quantity;
     private final long timestamp;
 
-    public TradeExecution(String buyOrderId, String sellOrderId, double price, long quantity, long timestamp) {
+    public TradeExecution(String id, String buyOrderId, String sellOrderId, double price, long quantity, long timestamp) {
+        this.id = id;
         this.buyOrderId = buyOrderId;
         this.sellOrderId = sellOrderId;
         this.price = price;
         this.quantity = quantity;
         this.timestamp = timestamp;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getBuyOrderId() {
@@ -37,7 +43,7 @@ public class TradeExecution {
 
     @Override
     public String toString() {
-        return String.format("TradeExecution{buyOrderId='%s', sellOrderId='%s', price=%.2f, quantity=%d, timestamp=%d}",
-                buyOrderId, sellOrderId, price, quantity, timestamp);
+        return String.format("TradeExecution{id='%s', buyOrderId='%s', sellOrderId='%s', price=%.2f, quantity=%d, timestamp=%d}",
+                id, buyOrderId, sellOrderId, price, quantity, timestamp);
     }
 }
