@@ -65,7 +65,7 @@ public class MatchingService {
      * @param asset Trading asset
      * @return Order book data
      */
-    public FIFOEngine.OrderBookLevel getOrderBook(String asset) {
+    public List<FIFOEngine.OrderBookLevel> getOrderBook(String asset) {
         return fifoEngine.getOrderBookDepth(asset);
     }
     

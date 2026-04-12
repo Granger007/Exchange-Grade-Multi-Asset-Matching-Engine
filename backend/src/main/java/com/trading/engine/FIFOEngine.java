@@ -2,7 +2,6 @@ package com.trading.engine;
 
 import com.trading.model.Order;
 import com.trading.model.OrderSide;
-import com.trading.model.OrderStatus;
 import com.trading.model.Trade;
 import org.springframework.stereotype.Component;
 
