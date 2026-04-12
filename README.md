@@ -58,7 +58,7 @@ Frontend (Next.js)     Backend API (Spring Boot)     Database (MySQL)
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/Granger007/Exchange-Grade-Multi-Asset-Matching-Engine.git
 cd Exchange-Grade-Multi-Asset-Matching-Engine
 ```
 
